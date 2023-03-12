@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {useEffect, useState} from "react";
 
 const Button = (props: ButtonProps) => {
   const { token } = props;
@@ -7,7 +7,7 @@ const Button = (props: ButtonProps) => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string>('');
 
-  function startRecording() {
+  const startRecording = () => {
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(function(stream) {
         const mediaRecorder = new MediaRecorder(stream);
@@ -33,10 +33,22 @@ const Button = (props: ButtonProps) => {
       });
   }
 
-  function stopRecording() {
+  const stopRecording = () => {
     mediaRecorder?.stop();
     setIsRecording(false);
   }
+
+  useEffect(() => {
+    return () => {
+      mediaRecorder?.removeEventListener('dataavailable', () => {
+        // 이벤트리스너 해제
+        console.log('dataavailable 이벤트리스너 해제됨')
+      });
+      mediaRecorder?.removeEventListener('stop', () => {
+        console.log('stop 이벤트리스너 해제됨')
+      })
+    }
+  }, [])
 
   return (
     <div>
