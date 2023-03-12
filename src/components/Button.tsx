@@ -1,6 +1,6 @@
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import {useEffect, useState} from "react";
-import { postPromptToGPT } from '../apis/chatgpt';
+import { postPromptToGPT, fetchData } from '../apis/chatgpt';
 
 const Dictaphone = () => {
   const {
