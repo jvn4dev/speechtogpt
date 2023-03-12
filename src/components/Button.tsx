@@ -1,71 +1,40 @@
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import {useEffect, useState} from "react";
+import { postPromptToGPT } from '../apis/chatgpt';
 
-const Button = (props: ButtonProps) => {
-  const { token } = props;
-  const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string>('');
+const Dictaphone = () => {
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition
+  } = useSpeechRecognition();
 
-  const startRecording = () => {
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(function(stream) {
-        const mediaRecorder = new MediaRecorder(stream);
-        setMediaRecorder(mediaRecorder);
-        const chunks: Blob[] = [];
-
-        mediaRecorder.addEventListener('dataavailable', function(event) {
-          chunks.push(event.data);
-        });
-
-        mediaRecorder.addEventListener('stop', function() {
-          const audioBlob = new Blob(chunks, { type: 'audio/mp3' });
-          setAudioBlob(audioBlob);
-          const audioUrl = URL.createObjectURL(audioBlob);
-          setAudioUrl(audioUrl);
-        });
-
-        mediaRecorder.start();
-        setIsRecording(true);
-      })
-      .catch(function(error) {
-        console.log(error);
-      });
-  }
-
-  const stopRecording = () => {
-    mediaRecorder?.stop();
-    setIsRecording(false);
-  }
+  const [responseFromGPT, setResponseFromGPT] = useState('');
 
   useEffect(() => {
-    return () => {
-      mediaRecorder?.removeEventListener('dataavailable', () => {
-        // 이벤트리스너 해제
-        console.log('dataavailable 이벤트리스너 해제됨')
-      });
-      mediaRecorder?.removeEventListener('stop', () => {
-        console.log('stop 이벤트리스너 해제됨')
-      })
+    if (!listening && !!transcript) {
+      postPromptToGPT(transcript)
+        .then(res => {
+          setResponseFromGPT(res.data);
+          console.log(res)
+        })
     }
-  }, [])
+  }, [listening, transcript])
+
+  if (!browserSupportsSpeechRecognition) {
+    return <span>지원하지 않는 브라우저입니다. 크롬으로 실행해주세요.</span>;
+  }
 
   return (
     <div>
-      {audioUrl && (
-        <audio controls src={audioUrl}></audio>
-      )}
-      {isRecording ? (
-        <button onClick={stopRecording}>Stop Recording</button>
-      ) : (
-        <button onClick={startRecording}>Start Recording</button>
-      )}
+      <p>Microphone: {listening ? 'on' : 'off'}</p>
+      <button onClick={() => SpeechRecognition.startListening()}>Start</button>
+      <button onClick={() => SpeechRecognition.stopListening()}>Stop</button>
+      <button onClick={resetTranscript}>Reset</button>
+      <p>{transcript}</p>
+      <p>{responseFromGPT}</p>
     </div>
-  )
-}
-
-export default Button;
-
-type ButtonProps = {
-  token: string;
-}
+  );
+};
+export default Dictaphone;
