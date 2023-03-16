@@ -1,6 +1,6 @@
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import {useEffect, useState} from "react";
-import { postPromptToGPT, fetchData } from '../apis/chatgpt';
+import { postPromptToGPT } from '../apis/chatgpt';
 
 const Dictaphone = () => {
   const {
@@ -15,11 +15,9 @@ const Dictaphone = () => {
   useEffect(() => {
     if (!listening && !!transcript) {
       postPromptToGPT(transcript)
-        .then(res => {
-          setResponseFromGPT(res.data);
-          console.log(res)
-        })
+        .then(res => setResponseFromGPT(res.data.answer))
     }
+
   }, [listening, transcript])
 
   if (!browserSupportsSpeechRecognition) {
